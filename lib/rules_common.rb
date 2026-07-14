@@ -7,7 +7,14 @@ module BushSlicer
         return sources.flatten.reduce({}) { |rules, source|
           if source.kind_of? Hash
           elsif File.file? source
+            file_dir = File.dirname(File.expand_path(source))
             source = YAML.load_file source
+            # follow single-string redirect (e.g. "4.22.yaml" inside 5.0.yaml)
+            while source.kind_of? String
+              source = File.expand_path(source, file_dir)
+              file_dir = File.dirname(source)
+              source = YAML.load_file source
+            end
           elsif File.directory? source
             files = []
             if source.end_with? "/"
