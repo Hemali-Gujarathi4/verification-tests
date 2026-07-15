@@ -12,7 +12,18 @@ module BushSlicer
     SYSTEM_PROJECTS = [ "openshift-infra".freeze,
                         "default".freeze,
                         "management-infra".freeze,
-                        "openshift".freeze ]
+                        "openshift".freeze,
+                        "kube-system".freeze,
+                        "kube-public".freeze,
+                        "kube-node-lease".freeze ]
+
+    # Returns true if the given project name is a system/infrastructure project.
+    # Covers both the static list above and OCP4 operator namespace patterns.
+    def self.system_project?(name)
+      SYSTEM_PROJECTS.include?(name) ||
+        name.start_with?("openshift-") ||
+        name.start_with?("kube-")
+    end
 
     # @override
     def visible?(user: nil, result: {}, quiet: false)

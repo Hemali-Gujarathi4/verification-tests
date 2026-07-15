@@ -627,7 +627,7 @@ end
 
 Given /^I have a registry in my project$/ do
   ensure_admin_tagged
-  if BushSlicer::Project::SYSTEM_PROJECTS.include?(project(generate: false).name)
+  if BushSlicer::Project.system_project?(project(generate: false).name)
     raise "I refuse create registry in a system project: #{project.name}"
   end
   @result = admin.cli_exec(:create_deployment, name: "registry", image: "quay.io/openshifttest/registry@sha256:1106aedc1b2e386520bc2fb797d9a7af47d651db31d8e7ab472f2352da37d1b3", namespace: project.name)
@@ -647,7 +647,7 @@ end
 
 Given /^I have a registry with htpasswd authentication enabled in my project$/ do
 #  ensure_admin_tagged
-  if BushSlicer::Project::SYSTEM_PROJECTS.include?(project(generate: false).name)
+  if BushSlicer::Project.system_project?(project(generate: false).name)
     raise "I refuse create registry in a system project: #{project.name}"
   end
   @result = admin.cli_exec(:new_app, as_deployment_config:true, docker_image: "quay.io/openshifttest/registry:1.2.0", namespace: project.name)

@@ -6,10 +6,8 @@ end
 
 Given /^I have a project$/ do
   # system projects should not be selected by default
-  sys_projects = BushSlicer::Project::SYSTEM_PROJECTS
-
   project = @projects.reverse.find {|p|
-    !sys_projects.include?(p.name) &&
+    !BushSlicer::Project.system_project?(p.name) &&
       p.is_user_admin?(user: user, cached: true) &&
       p.active?(user: user, cached: true)
   }
