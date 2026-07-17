@@ -109,26 +109,17 @@ module BushSlicer
       logger.info "cleaning-up user #{name} projects"
       ## make sure we don't delete special projects due to wrong permissions
       #  also make sure we don't hit policy cache incoherence
-      #
-      # On OCP4 test users may legitimately see system/operator namespaces
-      # (openshift-*, kube-*, default, etc.).  Rather than treating that as an
-      # error we simply skip those namespaces and only delete the user-owned ones.
-      user_projects = wait_for(30, interval: 5) {
-        all_projects = projects()
-        # Filter out any system projects using the pattern-aware helper
-        safe = all_projects.reject { |p| Project.system_project?(p.name) }
-        # If only system projects remain (or none at all) we are done – return
-        # an empty array to signal "nothing left to delete".
-        safe if safe.length == all_projects.length || all_projects.empty?
+      only_safe_projects = wait_for(30, interval: 5) {
+        projects = projects()
+        return if projects.empty?
+        project_names = projects.map(&:name)
+        (project_names & Project::SYSTEM_PROJECTS).empty?
       }
+      unless only_safe_projects
+        raise "system projects visible to user #{name}, clean-up too dangerous"
+      end
 
-      # user_projects is either an Array (possibly empty) or false/nil on timeout
-      user_projects = [] if user_projects == false || user_projects.nil?
-
-      return if user_projects.empty?
-
-      project_names_to_delete = user_projects.map(&:name).join(" ")
-      res = cli_exec(:delete, object_type: "projects", object_name_or_id: project_names_to_delete)
+      res = cli_exec(:delete, object_type: "projects", object_name_or_id: '--all')
       # we don't need to check exit status, but some time is needed before
       #   project deleted status propagates properly
       unless res[:response].include? "No resource"
